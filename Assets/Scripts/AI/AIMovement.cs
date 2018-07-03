@@ -14,7 +14,8 @@
         private NeuralNet.Network _neuralNetwork;
 
         private bool IsRunning = false;
-        
+        private float _lastMoveValue;
+
         public float[][][] Weights
         {
             get {
@@ -43,7 +44,7 @@
 
         public void ResetNeuralNetwork()
         {
-            _neuralNetwork = new NeuralNet.Network(5, 3, new int[] { 6 });
+            _neuralNetwork = new NeuralNet.Network(6, 3, new int[] { 5 });
         }
 
         public void VaryWeightsByAmount(float variance)
@@ -53,9 +54,9 @@
 
         public void Update()
         {
-            if (!IsRunning) return;
+            if (!IsRunning || _manager.Paused) return;
 
-            var distances = GetRaycastDistances();
+            var distances = GetInputValues();
 
             CalculateAndMove(distances);
         }
@@ -63,7 +64,7 @@
         private void CalculateAndMove(float[] distances)
         {
             if (_scoreKeeper.Score <= 0) return;
-
+            
             _neuralNetwork.Calculate(distances);
 
             var nextMoveIndex = _neuralNetwork.GetHighestOutputNeuronIndex();
@@ -71,6 +72,11 @@
             if (nextMoveIndex > 0)
             {
                 transform.Translate(new Vector3(0, (nextMoveIndex == 1 ? 1 : -1) * Time.deltaTime * _manager.ShipSpeed));
+                _lastMoveValue = (nextMoveIndex == 1 ? 1.0f : -1.0f);
+            }
+            else
+            {
+                _lastMoveValue = 0;
             }
         }
 
@@ -84,7 +90,7 @@
             IsRunning = false;
         }
 
-        private float[] GetRaycastDistances()
+        private float[] GetInputValues()
         {
             var distances = new List<float>();
             var origin = new Vector2(transform.position.x + 0.4f, transform.position.y);
@@ -98,6 +104,7 @@
             distances.Add(GetRayCastDistance(origin, Vector2.right, raycastDistance));
             distances.Add(GetRayCastDistance(origin, downRight, raycastDistance));
             distances.Add(GetRayCastDistance(new Vector2(transform.position.x, transform.position.y - 0.2f), Vector2.down, raycastDistance));
+            distances.Add(_lastMoveValue);
             
             return distances.ToArray();
         }
@@ -123,6 +130,9 @@
                 if (IsRunning) _manager.ShipDied(Weights);
                 IsRunning = false;
                 gameObject.SetActive(false);
+                var renderer = gameObject.GetComponent(typeof(SpriteRenderer)) as SpriteRenderer;
+
+                GenerationHealthManager.Instance.ShipDied(renderer.color);
             }
         }
 

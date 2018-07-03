@@ -128,7 +128,11 @@
                     var neuronWeights = new float[_neurons[x - 1].Length];
                     for (int n = 0; n < _neurons[x - 1].Length; n++)
                     {
-                        neuronWeights[n] = baseWeights[x-1][y][n] + _rnd.NextFloat(-variance, variance);
+                        neuronWeights[n] = baseWeights[x - 1][y][n] + _rnd.NextFloat(-variance, variance); 
+
+                        // clamp to (-1.0, 1.0)
+                        if (neuronWeights[n] > 1.0f) neuronWeights[n] = 1.0f;
+                        if (neuronWeights[n] < -1.0f) neuronWeights[n] = -1.0f;
                     }
                     layerWeights.Add(neuronWeights);
                 }

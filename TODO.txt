@@ -1,0 +1,9 @@
+TODO for Tunnel
+
+x End Generation when OnlyBlack remains toggle
+x Save/Load weights (AI)
+x save generation that high score was created on.
+x make last output an input
+
+- Weights visualizer
+- More dynamic save system

@@ -17,7 +17,7 @@
 
         public void Activate()
         {
-            ResetPosition(0, 0);
+            ResetPosition(0, 0, StartPosition.x);
             IsActive = true;
         }
 
@@ -27,9 +27,9 @@
             IsActive = false;
         }
 
-        public void ResetPosition(float gapHeight, float verticalShiftAmount)
+        public void ResetPosition(float gapHeight, float verticalShiftAmount, float newX)
         {
-            Obj.transform.position = new Vector3(StartPosition.x, StartPosition.y);
+            Obj.transform.position = new Vector3(newX, StartPosition.y);
 
             if (gapHeight > 0)
             {
