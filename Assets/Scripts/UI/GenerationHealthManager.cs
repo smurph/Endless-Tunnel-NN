@@ -36,7 +36,7 @@ public class GenerationHealthManager : MonoBehaviour
         var renderer = obj.GetComponent(typeof(SpriteRenderer)) as SpriteRenderer;
         renderer.color = color;
 
-        obj.transform.SetParent(gameObject.transform);
+        obj.transform.SetParent(transform);
         ShiftNewShipObject(obj, _ships.Count);
         _ships.Add(color, obj);
 
@@ -52,7 +52,7 @@ public class GenerationHealthManager : MonoBehaviour
     {
         float shiftFactor = 25.0f;
         
-        obj.transform.localPosition = new Vector3(-266f + (shiftFactor * n), 171, 0);
+        obj.transform.localPosition = new Vector3(-632f + (shiftFactor * n), 368, 0);
         obj.transform.localScale = new Vector3(5, 5, 0);
     }
 }

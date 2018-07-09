@@ -192,8 +192,6 @@ public class AIManager : MonoBehaviour
 
         SetHighScore(_bestWeightScore, _bestWeightGeneration);
         StartGeneration(_bestWeightGeneration + 1);
-
-        Scroller.Instance.WallSpeed *= 2;
     }
 
     /// <summary>
@@ -205,8 +203,7 @@ public class AIManager : MonoBehaviour
         EndGeneration(true);
         _interface.ShowGameMenu();
         _isRunning = false;
-
-        Scroller.Instance.WallSpeed /= 2;
+        
         GenerationHealthManager.Instance.Background.SetActive(false);
     }
 
@@ -232,7 +229,7 @@ public class AIManager : MonoBehaviour
     public void PauseGame(bool paused = true)
     {
         Paused = paused;
-        Scroller.Instance.Paused = paused;
+        DynamicWallScroller.Instance.Paused = paused;
     }
 
 
