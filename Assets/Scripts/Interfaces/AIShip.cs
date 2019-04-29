@@ -4,7 +4,7 @@ namespace Assets.Scripts
 {
     public interface IAIShip
     {
-        AIMovement AIMovement { get; }
+        AIMovement Movement { get; }
 
         SpriteRenderer Renderer { get; }
 

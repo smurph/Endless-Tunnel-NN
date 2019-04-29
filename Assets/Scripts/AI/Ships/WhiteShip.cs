@@ -11,7 +11,7 @@
 
         public override void Evolve(float[][][] bestWeights)
         {
-            AIMovement.ResetNeuralNetwork();
+            Movement.ResetNeuralNetwork();
         }
     }
 }

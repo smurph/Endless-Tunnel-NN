@@ -38,7 +38,7 @@
 
         public Color Color { get { return _color; } }
 
-        public AIMovement AIMovement { get { return _movement; } }
+        public AIMovement Movement { get { return _movement; } }
 
         public SpriteRenderer Renderer { get { return _renderer; } }
 

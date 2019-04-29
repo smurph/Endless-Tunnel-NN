@@ -12,7 +12,7 @@
         public override void Evolve(float[][][] bestWeights)
         {
             base.Evolve(bestWeights);
-            AIMovement.VaryWeightsByAmount(0.25f);
+            Movement.VaryWeightsByAmount(0.25f);
         }
     }
 }

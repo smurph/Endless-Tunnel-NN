@@ -116,13 +116,13 @@ public class AIController : MonoBehaviour
         // if best weights is null, then the first set of random weights we get counts as "best"
         if (_bestWeights == null)
         {
-            _ships[0].AIMovement.ResetNeuralNetwork();
-            _bestWeights = _ships[0].AIMovement.Weights;
+            _ships[0].Movement.ResetNeuralNetwork();
+            _bestWeights = _ships[0].Movement.Weights;
         }
 
         foreach (var ship in _ships)
         {
-            ship.AIMovement.ResetPosition();
+            ship.Movement.ResetPosition();
 
             ship.SetActive(true);
 
