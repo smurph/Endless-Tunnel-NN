@@ -13,8 +13,10 @@ public class InterfaceManager : MonoBehaviour
     public Text SaveOnNewHighScoreButtonText;
     public Text GenerationDisplay;
     public Text HighScoreDisplay;
+    public Text ShowNeuralNetworkButtonText;
     public GameObject AIUIPage;
     public GameObject AISettingsPage;
+    public GameObject NeuralNetworkDisplay;
 
     // Use this for initialization
     void Start ()
@@ -43,8 +45,15 @@ public class InterfaceManager : MonoBehaviour
     {
         bool paused = !AISettingsPage.activeSelf;
         
-        AIManager.Instance.PauseGame(paused);
+        AIController.Instance.PauseGame(paused);
         AISettingsPage.SetActive(paused);
+    }
+
+    public void ToggleShowNeuralNetwork()
+    {
+        NeuralNetworkDisplay.SetActive(!NeuralNetworkDisplay.activeSelf);
+
+        ShowNeuralNetworkButtonText.text = NeuralNetworkDisplay.activeSelf ? "Yes" : "No";
     }
 
     internal void SetGenerationDisplay(int generation)

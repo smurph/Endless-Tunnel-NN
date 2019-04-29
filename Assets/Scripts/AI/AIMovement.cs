@@ -1,14 +1,12 @@
 ﻿namespace Assets.Scripts
 {
-    using System;
     using System.Collections.Generic;
     using UnityEngine;
-    using UnityEngine.UI;
 
     [RequireComponent(typeof(SpriteRenderer))]
     public class AIMovement : MonoBehaviour
     {
-        private AIManager _manager { get { return AIManager.Instance; } }
+        private AIController _aiController { get { return AIController.Instance; } }
         private Scorekeeper _scoreKeeper { get { return Scorekeeper.Instance; } }
 
         private NeuralNet.Network _neuralNetwork;
@@ -21,7 +19,7 @@
             get {
                 return _neuralNetwork.Weights;
             }
-            
+
             set
             {
                 _neuralNetwork.Weights = value;
@@ -30,16 +28,16 @@
 
         private void OnEnable()
         {
-            AIManager.OnGenerationStart += OnGameStart;
-            AIManager.OnGenerationEnd += OnGameEnd;
+            AIController.OnGenerationStart += OnGameStart;
+            AIController.OnGenerationEnd += OnGameEnd;
 
             ResetNeuralNetwork();
         }
 
         private void OnDisable()
         {
-            AIManager.OnGenerationStart -= OnGameStart;
-            AIManager.OnGenerationEnd -= OnGameEnd;
+            AIController.OnGenerationStart -= OnGameStart;
+            AIController.OnGenerationEnd -= OnGameEnd;
         }
 
         public void ResetNeuralNetwork()
@@ -54,24 +52,22 @@
 
         public void Update()
         {
-            if (!IsRunning || _manager.Paused) return;
+            if (!IsRunning || _aiController.Paused) return;
 
-            var distances = GetInputValues();
-
-            CalculateAndMove(distances);
+            CalculateAndMove();
         }
 
-        private void CalculateAndMove(float[] distances)
+        private void CalculateAndMove()
         {
             if (_scoreKeeper.Score <= 0) return;
-            
-            _neuralNetwork.Calculate(distances);
+
+            _neuralNetwork.Calculate(GetInputValues());
 
             var nextMoveIndex = _neuralNetwork.GetHighestOutputNeuronIndex();
-            
+
             if (nextMoveIndex > 0)
             {
-                transform.Translate(new Vector3(0, (nextMoveIndex == 1 ? 1 : -1) * Time.deltaTime * _manager.ShipSpeed));
+                transform.position = (new Vector3(transform.position.x, transform.position.y + ((nextMoveIndex == 1 ? 1 : -1) * Time.deltaTime * _aiController.ShipSpeed)));
                 _lastMoveValue = (nextMoveIndex == 1 ? 1.0f : -1.0f);
             }
             else
@@ -105,7 +101,7 @@
             distances.Add(GetRayCastDistance(origin, downRight, raycastDistance));
             distances.Add(GetRayCastDistance(new Vector2(transform.position.x, transform.position.y - 0.2f), Vector2.down, raycastDistance));
             distances.Add(_lastMoveValue);
-            
+
             return distances.ToArray();
         }
 
@@ -127,7 +123,7 @@
         {
             if (collider.tag == "wall")
             {
-                if (IsRunning) _manager.ShipDied(Weights);
+                if (IsRunning) _aiController.ShipDied(Weights);
                 IsRunning = false;
                 gameObject.SetActive(false);
                 var renderer = gameObject.GetComponent(typeof(SpriteRenderer)) as SpriteRenderer;

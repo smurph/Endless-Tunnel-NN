@@ -1,14 +1,13 @@
-﻿using Assets.Scripts;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using Assets.Scripts;
+using Assets.Scripts.AI.Ships;
 using UnityEngine;
 
-public class AIManager : MonoBehaviour
+public class AIController : MonoBehaviour
 {
-    public static AIManager Instance { get; set; }
+    public static AIController Instance { get; set; }
 
     private Scorekeeper _scoreKeeper { get { return Scorekeeper.Instance; } }
 
@@ -21,14 +20,13 @@ public class AIManager : MonoBehaviour
 
     public GameObject ShipPrefab;
 
-    private List<GameObject> _ships;
+    private List<IAIShip> _ships;
 
     public float ShipSpeed;
 
     private float[][][] _bestWeights { get; set; }
     private float[][][] _bestWeightsThisGeneration { get; set; }
 
-    private int _shipsPerGeneration = 6;
     private int _bestWeightScore { get; set; }
     private int _bestWeightGeneration { get; set; }
     private int _generation { get; set; }
@@ -51,11 +49,21 @@ public class AIManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Escape)) EndGame();
 
-        var activeShipCount = _ships.Count(s => s.gameObject.activeSelf);
-        if (activeShipCount == 0 || (_endGameWhenOnlyBestWeightsRemain && (activeShipCount == 1 && _ships.Where(s => s.gameObject.activeSelf).First().GetComponent<SpriteRenderer>().color == Color.black)))
+        if (ShouldEndGeneration())
         {
             EndGeneration();
         }
+    }
+
+    private bool ShouldEndGeneration()
+    {
+        var activeShips = _ships.Where(s => s.Active);
+
+        if (activeShips.Count() == 0) return true;
+
+        return (_endGameWhenOnlyBestWeightsRemain
+            && (activeShips.Count() == 1
+                && _ships.First(s => s.Active).Color == Color.black));
     }
 
     public void Awake()
@@ -65,12 +73,25 @@ public class AIManager : MonoBehaviour
 
     private void InitShips()
     {
-        if (_shipsPerGeneration <= 0) return;
+        //todo: automate this somehow?
 
-        for (int x = 0; x < _shipsPerGeneration; x++)
+        _ships = new List<IAIShip>
         {
-            _ships.Add(Instantiate(ShipPrefab));
-        }
+            NewColorfulShip<RedShip>(),
+            NewColorfulShip<GreenShip>(),
+            NewColorfulShip<BlueShip>(),
+            NewColorfulShip<BlackShip>(),
+            NewColorfulShip<WhiteShip>()
+        };
+    }
+
+    private ColorfulAiShip NewColorfulShip<T>() where T : ColorfulAiShip
+    {
+        var ship = Instantiate(ShipPrefab);
+
+        T obj = (T)Activator.CreateInstance(typeof(T), new object[] { ship });
+
+        return obj;
     }
 
     private void DestroyShips()
@@ -79,11 +100,11 @@ public class AIManager : MonoBehaviour
         {
             foreach (var ship in _ships)
             {
-                Destroy(ship);
+                Destroy(ship.Prefab);
             }
         }
 
-        _ships = new List<GameObject>();
+        _ships = new List<IAIShip>();
     }
 
     private void ResetShips()
@@ -92,71 +113,22 @@ public class AIManager : MonoBehaviour
 
         GenerationHealthManager.Instance.ResetShips();
 
-        var x = 0;
-        foreach (var ship in _ships)
+        // if best weights is null, then the first set of random weights we get counts as "best"
+        if (_bestWeights == null)
         {
-            var aiMovement = ship.GetComponent(typeof(AIMovement)) as AIMovement;
-            var shipRenderer = ship.GetComponent(typeof(SpriteRenderer)) as SpriteRenderer;
-
-            aiMovement.ResetPosition();
-
-            ship.SetActive(true);
-            if (_bestWeights == null)
-            {
-                aiMovement.ResetNeuralNetwork();
-                _bestWeights = aiMovement.Weights;
-            }
-
-            aiMovement.Weights = _bestWeights;
-
-            if (x == 0)
-            {
-                // Don't modify weights
-                shipRenderer.color = Color.black;
-                GenerationHealthManager.Instance.AddShip(Color.black);
-            }
-            else if (x == 1)
-            {
-                aiMovement.VaryWeightsByAmount(0.75f);
-                shipRenderer.color = Color.red;
-                GenerationHealthManager.Instance.AddShip(Color.red);
-            }
-            else if (x == 2)
-            {
-                aiMovement.VaryWeightsByAmount(0.5f);
-                shipRenderer.color = Color.blue;
-                GenerationHealthManager.Instance.AddShip(Color.blue);
-            }
-            else if (x == 3)
-            {
-                aiMovement.VaryWeightsByAmount(0.25f);
-                shipRenderer.color = Color.green;
-                GenerationHealthManager.Instance.AddShip(Color.green);
-            }
-            else if (x == 4)
-            {
-                aiMovement.ResetNeuralNetwork();
-                shipRenderer.color = Color.white;
-                GenerationHealthManager.Instance.AddShip(Color.white);
-            }
-            else
-            {
-                if (_bestWeightsThisGeneration == null || _bestWeightsThisGeneration.SequenceEqual(_bestWeights))
-                {
-                    aiMovement.gameObject.SetActive(false);
-                }
-                else
-                {
-                    shipRenderer.color = Color.magenta;
-                    aiMovement.Weights = _bestWeightsThisGeneration; // technically best weights *last* generation at this point
-                    GenerationHealthManager.Instance.AddShip(Color.magenta);
-                }
-            }
-            
-            x++;
+            _ships[0].AIMovement.ResetNeuralNetwork();
+            _bestWeights = _ships[0].AIMovement.Weights;
         }
 
-        _bestWeightsThisGeneration = null;
+        foreach (var ship in _ships)
+        {
+            ship.AIMovement.ResetPosition();
+
+            ship.SetActive(true);
+
+            ship.Evolve(_bestWeights);
+            GenerationHealthManager.Instance.AddShip(ship.Color);
+        }
     }
 
     private void ResetWeightsAndScore()
@@ -177,7 +149,7 @@ public class AIManager : MonoBehaviour
         _isRunning = true;
         InitShips();
         _interface.ShowAIUI();
-        
+
         if (loadLastSave)
         {
             try
@@ -203,7 +175,7 @@ public class AIManager : MonoBehaviour
         EndGeneration(true);
         _interface.ShowGameMenu();
         _isRunning = false;
-        
+
         GenerationHealthManager.Instance.Background.SetActive(false);
     }
 
@@ -216,6 +188,9 @@ public class AIManager : MonoBehaviour
         _interface.EndGameConditionButtonText.text = (_endGameWhenOnlyBestWeightsRemain ? "Yes" : "No");
     }
 
+    /// <summary>
+    /// Toggles whether we persist to disk on every new high score.
+    /// </summary>
     public void ToggleSaveOnNewHighScore()
     {
         _saveOnNewHighScore = !_saveOnNewHighScore;
@@ -249,10 +224,28 @@ public class AIManager : MonoBehaviour
         ship.SaveToFile();
     }
 
+    /// <summary>
+    /// Indicate that a ship died. Pass in the weights so that they can be cached if needed.
+    /// </summary>
+    /// <param name="weights">The set of weights from the Neural Network of the ship that died</param>
+    public void ShipDied(float[][][] weights)
+    {
+        if (_scoreKeeper.Score > _bestWeightScore)
+        {
+            if (_saveOnNewHighScore) SaveGame();
+
+            SetHighScore(_scoreKeeper.Score, _generation);
+            _bestWeights = weights;
+        }
+
+        if (!_bestWeights.SequenceEqual(weights)) _bestWeightsThisGeneration = weights;
+    }
+
     private void StartGeneration(int generation)
     {
         SetGeneration(generation);
         _scoreKeeper.ResetScore();
+        _bestWeightsThisGeneration = null;
         ResetShips();
         OnGenerationStart();
     }
@@ -270,19 +263,6 @@ public class AIManager : MonoBehaviour
     {
         _generation = generation;
         _interface.SetGenerationDisplay(_generation);
-    }
-
-    public void ShipDied(float[][][] weights)
-    {
-        if (_scoreKeeper.Score > _bestWeightScore)
-        {
-            if (_saveOnNewHighScore) SaveGame();
-
-            SetHighScore(_scoreKeeper.Score, _generation);
-            _bestWeights = weights;
-        }
-
-        if (!_bestWeights.SequenceEqual(weights)) _bestWeightsThisGeneration = weights;
     }
 
     private void SetHighScore(int score, int generation)

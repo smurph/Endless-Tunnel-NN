@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 
 public class GameManager : MonoBehaviour {
     public static GameManager Instance { get; set; }
@@ -11,7 +7,7 @@ public class GameManager : MonoBehaviour {
 
     public static event GameEvent OnGameStart;
     public static event GameEvent OnGameEnd;
-    
+
     public GameObject GameMenuPage;
     public GameObject PlayerShip;
 
@@ -20,7 +16,7 @@ public class GameManager : MonoBehaviour {
     public bool IsRunning { get; private set; }
 
     private Scorekeeper _scoreKeeper { get { return Scorekeeper.Instance; } }
-    
+
     public void Awake()
     {
         Instance = this;
@@ -41,7 +37,7 @@ public class GameManager : MonoBehaviour {
 
         OnGameStart();
     }
-    
+
     public void GameOver()
     {
         OnGameEnd();

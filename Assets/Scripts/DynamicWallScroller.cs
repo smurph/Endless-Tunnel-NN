@@ -144,8 +144,8 @@ public class DynamicWallScroller : MonoBehaviour
 
     private void OnDisable()
     {
-        AIManager.OnGenerationStart -= OnGameStart;
-        AIManager.OnGenerationEnd -= OnGameEnd;
+        AIController.OnGenerationStart -= OnGameStart;
+        AIController.OnGenerationEnd -= OnGameEnd;
 
         GameManager.OnGameStart -= OnGameStart;
         GameManager.OnGameEnd -= OnGameEnd;
@@ -153,8 +153,8 @@ public class DynamicWallScroller : MonoBehaviour
 
     private void OnEnable()
     {
-        AIManager.OnGenerationStart += OnGameStart;
-        AIManager.OnGenerationEnd += OnGameEnd;
+        AIController.OnGenerationStart += OnGameStart;
+        AIController.OnGenerationEnd += OnGameEnd;
 
         GameManager.OnGameStart += OnGameStart;
         GameManager.OnGameEnd += OnGameEnd;
